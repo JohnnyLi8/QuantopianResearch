@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import pandas as pd
 import numpy as np
 from quantopian.pipeline import Pipeline
@@ -48,14 +42,8 @@ SECTOR_CODES = {
     Sector.TECHNOLOGY: 311,
     -1 : 'Misc'
 }
-# In[91]:
 
-
-sector = 311
-
-
-# In[92]:
-
+sector = 206
 
 def make_pipeline():
     pipe = Pipeline()
@@ -93,58 +81,31 @@ def extract_consistent_stocks(results):
     sector_stocks = list(sector_stocks)
     return sector_stocks
 
-
-# In[93]:
-
-
 pipe = make_pipeline()
-start_date = '2018-2-1'
-end_date = '2020-2-20'
+two_years_ago = datetime.datetime.now() - datetime.timedelta(days=3*365)
+start_date = two_years_ago.strftime("%Y-%m-%d")
+end_date = datetime.date.today().strftime("%Y-%m-%d")
 results = run_pipeline(pipe, start_date, end_date)
-
-
-# In[94]:
-
 
 results.head()
 
-
-# In[95]:
-
-
 sector_stocks = extract_consistent_stocks(results)
-
-
-# In[96]:
-
 
 num_of_stocks = len(sector_stocks)
 print "there are %d assets in sector." % num_of_stocks
 
-
-# In[97]:
-
-
 tickers = [sector_stock.symbol for sector_stock in sector_stocks]
-historical_prices = get_pricing(tickers,start_date='2015-01-01',end_date='2020-02-14')
-SPY = get_pricing('SPY', fields='price',start_date='2015-01-01',end_date='2020-02-14')
+historical_prices = get_pricing(tickers,start_date='2015-05-10',end_date='2020-04-10')
+SPY = get_pricing('SPY', fields='price',start_date='2015-05-10',end_date='2020-04-10')
 historical_returns = historical_prices['close_price'].pct_change()[1:]
 SPY_returns = SPY.pct_change()[1:]
 daily_return_mean = historical_returns.mean(axis=1, skipna=True)
 overall_cumreturn = (daily_return_mean + 1).cumprod()
 SPY_cumreturn = (SPY_returns + 1).cumprod()
 
-
-# In[98]:
-
-
-overall_return.plot()
+overall_cumreturn.plot()
 SPY_cumreturn.plot()
 plt.legend(['Sector', 'SPY'])
-
-
-# In[99]:
-
 
 bp_ratios = []
 ep_ratios = []
@@ -166,18 +127,10 @@ BP_Ratios = pd.DataFrame( np.transpose(bp_ratios),
 EP_Ratios = pd.DataFrame( np.transpose(ep_ratios),
                 columns=sector_stocks, index=results.index.levels[0])
 
-
-# In[100]:
-
-
 bp_ratio_daily_avg = BP_Ratios.mean(axis=1)
 pb_ratio_daily_avg = 1/bp_ratio_daily_avg
 ep_ratio_daily_avg = EP_Ratios.mean(axis=1)
 pe_ratio_daily_avg = 1/ep_ratio_daily_avg
-
-
-# In[101]:
-
 
 plt.subplot(2, 1, 1)
 plt.plot(results.index.levels[0], pb_ratio_daily_avg.values, '-')
@@ -189,14 +142,6 @@ plt.plot(results.index.levels[0], pe_ratio_daily_avg.values, '.-')
 plt.ylabel('PE Ratio')
 plt.show()
 
-
-# In[ ]:
-
-
-
-
-
-# In[116]:
 
 
 def make_pipeline2():
@@ -215,8 +160,8 @@ def make_pipeline2():
     #profit_requirement = (profit_grade=='A') | (profit_grade=='B')
     mask = QTradableStocksUS()
     mask &= Sector().eq(sector)
-    mask &= value_score > 30
-    mask &= PE < 25
+    #mask &= value_score > 30
+    mask &= PE < 35
     mask &= USEquityPricing.volume.latest > 10000
     '''pipeline'''
     pipe = Pipeline(  
@@ -234,40 +179,14 @@ def make_pipeline2():
     )  
     return pipe 
 
-
-# In[117]:
-
-
 pipe = make_pipeline2()
-today = '2020-2-19'
+today = datetime.date.today().strftime("%Y-%m-%d")
 results = run_pipeline(pipe, today, today)
 
-
-# In[118]:
-
-
-filtered_results = results.query("Profit_Grade in ['A', 'B']").query("Financial_Health in ['A', 'B']")
-
-
-# In[119]:
-
+filtered_results = results.query("Profit_Grade in ['A']").query("Financial_Health in ['A']")
 
 filtered_results
 
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
 
 
 
